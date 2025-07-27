@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Xbox Spammer Panel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Basic styling for scrollable API key list */
+    #apiKeyList {
+      list-style: none;
+      padding: 0;
+      margin-top: 1rem;
+      max-height: 200px; /* Increased height for better visibility */
+      overflow-y: auto;
+      border: 1px solid #4a5568; /* Gray-700 equivalent */
+      border-radius: 0.25rem;
+    }
+    #apiKeyList li {
+      border-bottom: 1px solid #2d3748; /* Gray-800 equivalent */
+    }
+    #apiKeyList li:last-child {
+      border-bottom: none;
+    }
+    /* Style for the profile data output */
+    #profileDataOutput {
+        background-color: #2d3748; /* bg-gray-800 */
+        padding: 1rem;
+        border-radius: 0.25rem;
+        font-family: 'Courier New', Courier, monospace;
+        white-space: pre-wrap;
+        word-wrap: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #4a5568;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+  <div class="max-w-3xl w-full">
+    <div id="loginPanel" class="space-y-4">
+      <h1 class="text-3xl font-bold mb-4 text-center">Login</h1>
+      <input id="username" type="text" placeholder="Username" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="password" type="password" placeholder="Password" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button id="loginBtn" class="w-full bg-blue-600 py-3 rounded hover:bg-blue-700 transition duration-200">Login</button>
+      <p id="loginError" class="text-red-500 hidden text-center mt-2"></p>
+    </div>
+
+    <div id="mainPanel" class="hidden space-y-6">
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-3xl font-bold">Xbox Spammer Panel</h1>
+        <button id="logoutBtn" class="text-red-400 underline hover:text-red-500 transition duration-200">Logout</button>
+      </div>
+      
+      <p class="mb-4 text-lg">Logged in as: <span id="loggedInUser" class="font-semibold text-blue-300"></span></p>
+
+      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+        <h2 class="text-xl font-semibold mb-2">API Keys Management</h2>
+        <input id="apiKeyInput" type="text" placeholder="Enter API key (e.g., UUID format)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500" />
+        <div class="flex flex-wrap gap-2 mt-2">
+          <button id="addTempKeyBtn" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 transition duration-200">Add Temporary Key</button>
+          <button id="addPersistentKeyBtn" class="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700 transition duration-200 hidden">Add Persistent Key (Admin only)</button>
+        </div>
+        <ul id="apiKeyList" class="mt-4 space-y-1"></ul>
+      </section>
+
+      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+        <h2 class="text-xl font-semibold mb-2">Gamertag to XUID Lookup</h2>
+        <input id="lookupUsername" type="text" placeholder="Enter Gamertag" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <button id="lookupBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Lookup XUID</button>
+        <p class="mt-2">XUID: <span id="lookupResult" class="font-semibold"></span></p>
+      </section>
+
+      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+        <h2 class="text-xl font-semibold mb-2">Send Message</h2>
+        <input id="messageXuid" type="text" placeholder="Target XUID (16-digit number)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+        <input id="messageText" type="text" placeholder="Message text" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+        <input id="messageCount" type="number" placeholder="How many times" min="1" value="1" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+        <input id="messageDelay" type="number" placeholder="Delay (milliseconds) between messages" min="0" value="1000" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input id="useAllKeys" type="checkbox" checked class="form-checkbox h-5 w-5 text-yellow-600 bg-gray-700 border-gray-600 rounded focus:ring-yellow-500" />
+          <span class="text-gray-300">Use all API keys (rotates through them)</span>
+        </label>
+        <button id="sendMsgBtn" class="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-700 transition duration-200">Send Messages</button>
+        <p id="sendMsgStatus" class="mt-2 text-green-500"></p>
+      </section>
+
+      <section id="addUserSection" class="space-y-2 bg-gray-800 p-4 rounded shadow-lg hidden">
+        <h2 class="text-xl font-semibold mb-2">Add New User (Admin Only)</h2>
+        <input id="newUsername" type="text" placeholder="New Username" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="newPassword" type="password" placeholder="New Password" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div class="flex items-center gap-2">
+            <input id="newCanAddPersistent" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500" />
+            <label for="newCanAddPersistent" class="text-gray-300">Can add persistent keys (Admin privileges)</label>
+        </div>
+        <button id="addUserBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Add User</button>
+        <p id="addUserStatus" class="mt-2 text-green-500"></p>
+      </section>
+
+      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+        <h2 class="text-xl font-semibold mb-2">Xbox Profile Data</h2>
+        <input id="profileXuid" type="text" placeholder="Enter XUID to fetch profile" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+        <button id="fetchProfileBtn" class="bg-teal-600 px-4 py-2 rounded hover:bg-teal-700 transition duration-200">Fetch Profile</button>
+        <pre id="profileDataOutput" class="mt-2 text-sm text-gray-200"></pre>
+        <p id="profileStatus" class="mt-2 text-red-500"></p>
+      </section>
+
+
+      </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+
+    // Elements
+    const loginPanel = document.getElementById('loginPanel');
+    const mainPanel = document.getElementById('mainPanel');
+    const loginBtn = document.getElementById('loginBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('loginError');
+    const loggedInUserSpan = document.getElementById('loggedInUser');
+
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const addTempKeyBtn = document.getElementById('addTempKeyBtn');
+    const addPersistentKeyBtn = document.getElementById('addPersistentKeyBtn');
+    const apiKeyList = document.getElementById('apiKeyList');
+
+    const lookupUsernameInput = document.getElementById('lookupUsername');
+    const lookupBtn = document.getElementById('lookupBtn');
+    const lookupResult = document.getElementById('lookupResult');
+
+    const messageXuidInput = document.getElementById('messageXuid');
+    const messageTextInput = document.getElementById('messageText');
+    const messageCountInput = document.getElementById('messageCount');
+    const messageDelayInput = document.getElementById('messageDelay');
+    const useAllKeysCheckbox = document.getElementById('useAllKeys');
+    const sendMsgBtn = document.getElementById('sendMsgBtn');
+    const sendMsgStatus = document.getElementById('sendMsgStatus');
+
+    // NEW USER ELEMENTS
+    const addUserSection = document.getElementById('addUserSection');
+    const newUsernameInput = document.getElementById('newUsername');
+    const newPasswordInput = document.getElementById('newPassword');
+    const newCanAddPersistentCheckbox = document.getElementById('newCanAddPersistent');
+    const addUserBtn = document.getElementById('addUserBtn');
+    const addUserStatus = document.getElementById('addUserStatus');
+
+    // NEW PROFILE DATA ELEMENTS
+    const profileXuidInput = document.getElementById('profileXuid');
+    const fetchProfileBtn = document.getElementById('fetchProfileBtn');
+    const profileDataOutput = document.getElementById('profileDataOutput');
+    const profileStatus = document.getElementById('profileStatus');
+
+
+    let currentUser = null;
+    let apiKeys = []; // Stores temporary keys
+    let persistentKeys = []; // Stores persistent keys
+    window.canAddPersistent = false; // Global flag to indicate admin status for frontend logic
+
+    // --- Session Management ---
+    async function checkSession() {
+      try {
+        const res = await fetch(`${API_BASE}/check-session`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.loggedIn) {
+          currentUser = data.username;
+          window.canAddPersistent = data.canAddPersistent; // Set global flag
+          loggedInUserSpan.textContent = currentUser;
+          showMainPanel(data);
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Check session error:', error);
+        // Fallback to showing login panel on error
+        return false;
+      }
+    }
+
+    function showMainPanel(data) {
+      loginPanel.classList.add('hidden');
+      mainPanel.classList.remove('hidden');
+      loggedInUserSpan.textContent = data.username;
+
+      // Show/hide persistent key button based on user permissions
+      if (data.canAddPersistent) {
+        addPersistentKeyBtn.classList.remove('hidden');
+        addUserSection.classList.remove('hidden'); // Show add user section for admin
+      } else {
+        addPersistentKeyBtn.classList.add('hidden');
+        addUserSection.classList.add('hidden'); // Hide add user section for non-admin
+      }
+      loadApiKeys(); // Load keys once main panel is shown
+    }
+
+    async function login() {
+      loginError.classList.add('hidden');
+      const username = usernameInput.value.trim();
+      const password = passwordInput.value.trim();
+      if (!username || !password) {
+        loginError.textContent = 'Please enter username and password.';
+        loginError.classList.remove('hidden');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentUser = username;
+          window.canAddPersistent = data.canAddPersistent; // Set global flag on successful login
+          showMainPanel(data);
+        } else {
+          loginError.textContent = data.message || 'Invalid credentials.';
+          loginError.classList.remove('hidden');
+        }
+      } catch (error) {
+        console.error('Login request error:', error);
+        loginError.textContent = 'Error connecting to server. Please try again.';
+        loginError.classList.remove('hidden');
+      }
+    }
+
+    async function logout() {
+      try {
+        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
+        currentUser = null;
+        window.canAddPersistent = false; // Reset global flag on logout
+        loginPanel.classList.remove('hidden');
+        mainPanel.classList.add('hidden');
+        usernameInput.value = '';
+        passwordInput.value = '';
+        loginError.classList.add('hidden');
+        apiKeyList.innerHTML = ''; // Clear API key list on logout
+        apiKeys = [];
+        persistentKeys = [];
+        lookupResult.textContent = ''; // Clear lookup result
+        sendMsgStatus.textContent = ''; // Clear message status
+        addUserStatus.textContent = ''; // Clear add user status
+        profileDataOutput.textContent = ''; // Clear profile data
+        profileStatus.textContent = ''; // Clear profile status
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Error during logout. Please clear cookies manually if issues persist.');
+      }
+    }
+
+    // --- API Key Management ---
+    async function loadApiKeys() {
+      apiKeyList.innerHTML = '';
+      try {
+        const res = await fetch(`${API_BASE}/api-keys`, { credentials: 'include' });
+        if (!res.ok) {
+          apiKeyList.innerHTML = '<li class="text-red-500 p-2">Failed to load API keys.</li>';
+          return;
+        }
+        const data = await res.json();
+        apiKeys = data.tempKeys || [];
+        persistentKeys = data.persistentKeys || [];
+
+        // Display persistent keys for ALL authenticated users
+        persistentKeys.forEach(key => addApiKeyToList(key, true));
+        
+        // Display temporary keys for all users
+        apiKeys.forEach(key => addApiKeyToList(key, false));
+
+        if (apiKeys.length === 0 && persistentKeys.length === 0) {
+          apiKeyList.innerHTML = '<li class="text-gray-400 p-2">No API keys added yet.</li>';
+        }
+
+      } catch (error) {
+        console.error('Error loading API keys:', error);
+        apiKeyList.innerHTML = '<li class="text-red-500 p-2">Error loading API keys.</li>';
+      }
+    }
+
+    function addApiKeyToList(key, persistent) {
+      const li = document.createElement('li');
+      li.className = `flex justify-between items-center p-2 rounded ${persistent ? 'bg-purple-900' : 'bg-gray-700'}`;
+
+      const keyText = document.createElement('span');
+      keyText.textContent = key;
+      keyText.title = key; // Show full key on hover
+      keyText.className = 'truncate max-w-[calc(100%-70px)]'; // Truncate long keys
+
+      const typeTag = document.createElement('span');
+      typeTag.textContent = persistent ? ' (Persistent)' : ' (Temp)';
+      typeTag.className = 'text-xs text-gray-400 ml-1';
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove';
+      removeBtn.className = 'bg-red-600 px-2 py-1 rounded hover:bg-red-700 text-sm ml-2 transition duration-200';
+      removeBtn.onclick = async () => {
+        // Only allow admin to remove persistent keys, but any user can remove their temporary ones.
+        if (persistent && !window.canAddPersistent) { 
+          alert('Error: Only admin can remove persistent keys.');
+          return;
+        }
+        if (!confirm(`Are you sure you want to remove this key:\n${key}?`)) {
+            return;
+        }
+        try {
+          const res = await fetch(`${API_BASE}/api-keys/${encodeURIComponent(key)}?persistent=${persistent}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+          if (res.ok) {
+            await loadApiKeys(); // Reload all keys to update lists
+          } else {
+            const data = await res.json();
+            alert(data.message || 'Failed to remove key.');
+          }
+        } catch (error) {
+          console.error('Error removing key:', error);
+          alert('Error removing key. Check console for details.');
+        }
+      };
+
+      li.appendChild(keyText);
+      li.appendChild(typeTag); // Append the type tag
+      // Append the remove button if the user is an admin (can remove any key) 
+      // OR if it's a temporary key (which non-admins can remove).
+      if (window.canAddPersistent || !persistent) {
+          li.appendChild(removeBtn);
+      }
+      apiKeyList.appendChild(li);
+    }
+
+    async function addApiKey(persistent) {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        alert('Please enter an API key first.');
+        return;
+      }
+      // Simple validation for API key format (UUID-like)
+      if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(key)) {
+        alert('Invalid API key format. Expected UUID-like (e.g., xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).');
+        return;
+      }
+
+      if (persistent && !window.canAddPersistent) { // Use window.canAddPersistent
+        alert('Error: Only admin can add persistent keys.');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_BASE}/api-keys`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key, persistent }),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          alert(data.message || 'Failed to add key.');
+          return;
+        }
+        apiKeyInput.value = ''; // Clear input on success
+        await loadApiKeys(); // Reload keys to update display
+      } catch (error) {
+        console.error('Error adding key:', error);
+        alert('Error adding key. Check console for details.');
+      }
+    }
+
+    // --- Gamertag to XUID Lookup ---
+    async function lookupXUID() {
+      const gamertag = lookupUsernameInput.value.trim();
+      lookupResult.className = 'font-semibold'; // Reset class
+      lookupResult.textContent = 'Looking up...';
+
+      if (!gamertag) {
+        lookupResult.textContent = 'Please enter a gamertag.';
+        lookupResult.className = 'font-semibold text-red-500';
+        return;
+      }
+      // Prefer persistent keys for lookup if available, otherwise temporary
+      const apiKey = [...persistentKeys, ...apiKeys][0]; 
+      if (!apiKey) {
+        lookupResult.textContent = 'No API keys available to perform lookup. Add one first.';
+        lookupResult.className = 'font-semibold text-red-500';
+        return;
+      }
+
+      try {
+        console.log(`Frontend: Looking up XUID for gamertag: ${gamertag}`);
+        const res = await fetch(`${API_BASE}/lookup-xuid`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: gamertag, apiKey }) // Backend expects 'username' for gamertag
+        });
+        const data = await res.json();
+        if (res.ok) {
+          lookupResult.textContent = data.xuid || 'XUID not found.';
+          lookupResult.className = 'font-semibold text-green-500';
+          console.log(`Frontend: XUID found: ${data.xuid}`);
+        } else {
+          lookupResult.textContent = data.details || data.message || 'Error or user not found.';
+          lookupResult.className = 'font-semibold text-red-500';
+        }
+      } catch (error) {
+        console.error('Frontend: Error during XUID lookup:', error);
+        lookupResult.textContent = 'Error during lookup. Check console.';
+        lookupResult.className = 'font-semibold text-red-500';
+      }
+    }
+
+    // --- Send Message ---
+    async function sendMessage() {
+      const xuid = messageXuidInput.value.trim();
+      const message = messageTextInput.value.trim();
+      const count = parseInt(messageCountInput.value, 10);
+      const delay = parseInt(messageDelayInput.value, 10);
+      const useAll = useAllKeysCheckbox.checked;
+
+      sendMsgStatus.textContent = '';
+      sendMsgStatus.className = 'mt-2 text-red-500';
+
+      if (!xuid || !message) {
+        sendMsgStatus.textContent = 'Please fill in Target XUID and Message text.';
+        return;
+      }
+      // Client-side XUID validation (16 digits)
+      if (!/^\d{16}$/.test(xuid)) {
+        sendMsgStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
+        return;
+      }
+      if (isNaN(count) || count < 1) {
+        sendMsgStatus.textContent = 'Message count must be a positive number (at least 1).';
+        return;
+      }
+      if (isNaN(delay) || delay < 0) {
+        sendMsgStatus.textContent = 'Delay must be 0 or more (milliseconds).';
+        return;
+      }
+
+      // Combine and filter API keys
+      const allAvailableKeys = [...persistentKeys, ...apiKeys];
+      const selectedApiKeys = useAll ? allAvailableKeys : allAvailableKeys.slice(0, 1);
+      
+      if (selectedApiKeys.length === 0) {
+        sendMsgStatus.textContent = 'No API keys available to send messages. Add one first.';
+        return;
+      }
+
+      console.log(`Frontend: Sending message to XUID: ${xuid}, message: "${message.substring(0, 30)}..." using ${selectedApiKeys.length} API key(s).`);
+      sendMsgStatus.textContent = 'Sending messages... Please wait.';
+      sendMsgStatus.className = 'mt-2 text-yellow-500'; // Indicate pending status
+
+      try {
+        const res = await fetch(`${API_BASE}/send-message`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ xuid, message, sendCount: count, timeSpacing: delay / 1000, apiKeys: selectedApiKeys })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          if (data.failures && data.failures.length > 0) {
+              sendMsgStatus.textContent = `Messages sent, but ${data.failures.length} attempts failed. See console for details.`;
+              sendMsgStatus.className = 'mt-2 text-orange-500';
+              console.warn('Partial success - failures:', data.failures);
+          } else {
+              sendMsgStatus.textContent = `Successfully sent ${data.message || 'messages.'}`;
+              sendMsgStatus.className = 'mt-2 text-green-500';
+          }
+        } else {
+          sendMsgStatus.textContent = data.details || data.message || 'Failed to send messages.';
+        }
+      } catch (error) {
+        console.error('Frontend: Error sending messages:', error);
+        sendMsgStatus.textContent = 'Error connecting to server to send messages. Check console.';
+      }
+    }
+
+    // --- NEW: Add User Functionality ---
+    async function addUser() {
+        addUserStatus.textContent = ''; // Clear previous status
+        addUserStatus.className = 'mt-2 text-red-500'; // Default to red for errors
+
+        const username = newUsernameInput.value.trim();
+        const password = newPasswordInput.value.trim();
+        const canAddPersistent = newCanAddPersistentCheckbox.checked;
+
+        if (!username || !password) {
+            addUserStatus.textContent = 'Please enter a username and password for the new user.';
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/add-user`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password, canAddPersistent })
+            });
+            const data = await res.json();
+
+            if (res.ok) {
+                addUserStatus.textContent = data.message || `User '${username}' added successfully.`;
+                addUserStatus.className = 'mt-2 text-green-500';
+                newUsernameInput.value = ''; // Clear inputs
+                newPasswordInput.value = '';
+                newCanAddPersistentCheckbox.checked = false;
+            } else {
+                addUserStatus.textContent = data.message || 'Failed to add user.';
+            }
+        } catch (error) {
+            console.error('Frontend: Error adding user:', error);
+            addUserStatus.textContent = 'Error connecting to server to add user.';
+        }
+    }
+
+    // --- NEW: Fetch Xbox Profile Data ---
+    async function fetchProfileData() {
+        profileDataOutput.textContent = ''; // Clear previous output
+        profileStatus.textContent = ''; // Clear previous status
+        profileStatus.className = 'mt-2 text-red-500'; // Default to red for errors
+
+        const xuid = profileXuidInput.value.trim();
+
+        if (!xuid) {
+            profileStatus.textContent = 'Please enter an XUID.';
+            return;
+        }
+        if (!/^\d{16}$/.test(xuid)) {
+            profileStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
+            return;
+        }
+
+        const apiKey = [...persistentKeys, ...apiKeys][0]; // Use first available API key
+        if (!apiKey) {
+            profileStatus.textContent = 'No API keys available to fetch profile data. Add one first.';
+            return;
+        }
+
+        profileStatus.textContent = 'Fetching profile data...';
+        profileStatus.className = 'mt-2 text-yellow-500'; // Indicate pending
+
+        try {
+            const res = await fetch(`${API_BASE}/profile-data`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ xuid, apiKey })
+            });
+            const data = await res.json();
+
+            if (res.ok && data.profile) {
+                // Display selected fields or the whole object if you prefer
+                let displayText = `Gamertag: ${data.profile.gamertag}\n`;
+                displayText += `XUID: ${data.profile.id}\n`;
+                displayText += `Gamerscore: ${data.profile.gamerscore}\n`;
+                displayText += `Account Tier: ${data.profile.accountTier}\n`;
+                displayText += `Xbox One Rep: ${data.profile.xboxOneRep}\n`;
+                displayText += `Presence State: ${data.profile.presenceState || 'Offline'}\n`;
+                if (data.profile.presenceText) {
+                    displayText += `Presence Text: ${data.profile.presenceText}\n`;
+                }
+                displayText += `Display Pic: ${data.profile.displayPicRaw || 'N/A'}\n`;
+                if (data.profile.bio) {
+                    displayText += `Bio: ${data.profile.bio}\n`;
+                }
+                // You can add more fields from data.profile as needed
+
+                profileDataOutput.textContent = displayText;
+                profileStatus.textContent = 'Profile data fetched successfully!';
+                profileStatus.className = 'mt-2 text-green-500';
+            } else {
+                profileDataOutput.textContent = ''; // Clear any previous data
+                profileStatus.textContent = data.details || data.message || 'Failed to fetch profile data.';
+            }
+        } catch (error) {
+            console.error('Frontend: Error fetching profile data:', error);
+            profileDataOutput.textContent = ''; // Clear any previous data
+            profileStatus.textContent = 'Error connecting to server to fetch profile data.';
+        }
+    }
+
+
+    // --- Event Listeners ---
+    loginBtn.addEventListener('click', login);
+    logoutBtn.addEventListener('click', logout);
+    addTempKeyBtn.addEventListener('click', () => addApiKey(false));
+    addPersistentKeyBtn.addEventListener('click', () => addApiKey(true));
+    lookupBtn.addEventListener('click', lookupXUID);
+    sendMsgBtn.addEventListener('click', sendMessage);
+    addUserBtn.addEventListener('click', addUser); // New event listener for Add User button
+    fetchProfileBtn.addEventListener('click', fetchProfileData); // NEW event listener for Profile Data
+
+    // Initial check on page load
+    (async () => {
+      const loggedIn = await checkSession();
+      if (!loggedIn) {
+        loginPanel.classList.remove('hidden');
+        mainPanel.classList.add('hidden');
+      }
+    })();
+  </script>
+</body>
+</html>
