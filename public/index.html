@@ -1,607 +1,1091 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Xbox Spammer Panel</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    /* Basic styling for scrollable API key list */
-    #apiKeyList {
-      list-style: none;
-      padding: 0;
-      margin-top: 1rem;
-      max-height: 200px; /* Increased height for better visibility */
-      overflow-y: auto;
-      border: 1px solid #4a5568; /* Gray-700 equivalent */
-      border-radius: 0.25rem;
-    }
-    #apiKeyList li {
-      border-bottom: 1px solid #2d3748; /* Gray-800 equivalent */
-    }
-    #apiKeyList li:last-child {
-      border-bottom: none;
-    }
-    /* Style for the profile data output */
-    #profileDataOutput {
-        background-color: #2d3748; /* bg-gray-800 */
-        padding: 1rem;
-        border-radius: 0.25rem;
-        font-family: 'Courier New', Courier, monospace;
-        white-space: pre-wrap;
-        word-wrap: break-word;
-        max-height: 300px;
-        overflow-y: auto;
-        border: 1px solid #4a5568;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xbox Spammer Panel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #1a202c; /* Dark background */
+            color: #e2e8f0; /* Light text */
+        }
+        .container {
+            max-width: 90%;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #2d3748; /* Slightly lighter dark background */
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        textarea,
+        select {
+            background-color: #4a5568; /* Darker input fields */
+            color: #e2e8f0;
+            border: 1px solid #6b7280;
+            border-radius: 0.375rem;
+            padding: 0.5rem 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4299e1; /* Blue button */
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            transition: background-color 0.2s;
+        }
+        button:hover {
+            background-color: #3182ce;
+        }
+        button:disabled {
+            background-color: #6b7280;
+            cursor: not-allowed;
+        }
+        .message-box {
+            background-color: #2d3748;
+            border: 1px solid #4a5568;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-top: 1rem;
+            word-wrap: break-word; /* Ensure long messages wrap */
+        }
+        .message-box.success {
+            border-color: #48bb78; /* Green */
+            background-color: #2f493f;
+        }
+        .message-box.error {
+            border-color: #f56565; /* Red */
+            background-color: #4a2a2a;
+        }
+        .message-box.info {
+            border-color: #63b3ed; /* Blue */
+            background-color: #314e6e;
+        }
+        .table-container {
+            overflow-x: auto; /* Enable horizontal scrolling for tables if content overflows */
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid #4a5568;
+            padding: 0.75rem;
+            text-align: left;
+        }
+        th {
+            background-color: #4a5568;
+            font-weight: 600;
+        }
+        tr:nth-child(even) {
+            background-color: #2d3748; /* Alternate row background */
+        }
+        tr:nth-child(odd) {
+            background-color: #242b38;
+        }
+        /* Specific styles for tables inside admin sections */
+        #userListTable th, #userListTable td,
+        #auditLogsTable th, #auditLogsTable td,
+        #knownXuidsTable th, #knownXuidsTable td { /* Added knownXuidsTable */
+            padding: 0.75rem;
+            border-bottom: 1px solid #4a5568;
+            text-align: left;
+        }
+        #userListTable th, #auditLogsTable th, #knownXuidsTable th { /* Added knownXuidsTable */
+            background-color: #2d3748; /* bg-gray-800 */
+            color: #cbd5e0; /* text-gray-300 */
+        }
+        #userListTable tbody tr:hover, #auditLogsTable tbody tr:hover, #knownXuidsTable tbody tr:hover { /* Added knownXuidsTable */
+            background-color: #4a5568; /* bg-gray-700 */
+        }
+        /* Style for the floating arrow button (now an a tag) */
+        #openMHDDOSPanel { /* ID changed back to openMHDDOSPanel */
+            position: fixed;
+            bottom: 1.5rem; /* Equivalent to p-4 */
+            right: 1.5rem; /* Equivalent to p-4 */
+            background-color: #1a202c; /* gray-900 equivalent */
+            color: #4299e1; /* blue-400 equivalent */
+            border: 2px solid #4299e1; /* blue-400 equivalent */
+            border-radius: 50%; /* Make it circular */
+            width: 3rem; /* Adjust size */
+            height: 3rem; /* Adjust size */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-decoration: none; /* Remove underline for link */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s, transform 0.3s;
+            z-index: 1000; /* Ensure it's above other content */
+        }
+        #openMHDDOSPanel:hover {
+            background-color: #2a4365; /* blue-900 equivalent */
+            transform: scale(1.1);
+        }
+    </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
-  <div class="max-w-3xl w-full">
-    <div id="loginPanel" class="space-y-4">
-      <h1 class="text-3xl font-bold mb-4 text-center">Login</h1>
-      <input id="username" type="text" placeholder="Username" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <input id="password" type="password" placeholder="Password" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <button id="loginBtn" class="w-full bg-blue-600 py-3 rounded hover:bg-blue-700 transition duration-200">Login</button>
-      <p id="loginError" class="text-red-500 hidden text-center mt-2"></p>
+    <div class="max-w-4xl w-full">
+        <div id="loginPanel" class="space-y-4">
+            <h1 class="text-3xl font-bold mb-4 text-center">Login</h1>
+            <input id="username" type="text" placeholder="Username" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input id="password" type="password" placeholder="Password" class="w-full p-3 rounded bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <button id="loginBtn" class="w-full bg-blue-600 py-3 rounded hover:bg-blue-700 transition duration-200">Login</button>
+            <p id="loginError" class="text-red-500 hidden text-center mt-2"></p>
+        </div>
+
+        <div id="mainPanel" class="hidden space-y-6">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-3xl font-bold">Xbox Spammer Panel</h1>
+                <button id="logoutBtn" class="text-red-400 underline hover:text-red-500 transition duration-200">Logout</button>
+            </div>
+            
+            <p class="mb-4 text-lg">Logged in as: <span id="loggedInUser" class="font-semibold text-blue-300"></span></p>
+
+            <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                <h2 class="text-xl font-semibold mb-2">API Keys Management</h2>
+                <input id="apiKeyInput" type="text" placeholder="Enter API key (e.g., UUID format)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500" />
+                <div class="flex flex-wrap gap-2 mt-2">
+                    <button id="addTempKeyBtn" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 transition duration-200">Add Temporary Key</button>
+                    <button id="addPersistentKeyBtn" class="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700 transition duration-200 hidden">Add Persistent Key (Admin only)</button>
+                </div>
+                <ul id="apiKeyList" class="mt-4 space-y-1"></ul>
+            </section>
+
+            <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                <h2 class="text-xl font-semibold mb-2">Gamertag to XUID Lookup</h2>
+                <input id="lookupUsername" type="text" placeholder="Enter Gamertag" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button id="lookupBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Lookup XUID</button>
+                <p class="mt-2">XUID: <span id="lookupResult" class="font-semibold"></span></p>
+            </section>
+
+            <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                <h2 class="text-xl font-semibold mb-2">Send Message</h2>
+                <input id="messageXuid" type="text" placeholder="Target XUID (16-digit number)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <input id="messageText" type="text" placeholder="Message text" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <input id="messageCount" type="number" placeholder="How many times" min="1" value="1" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <input id="messageDelay" type="number" placeholder="Delay (milliseconds) between messages" min="0" value="1000" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
+                <label class="flex items-center gap-2 cursor-pointer">
+                    <input id="useAllKeys" type="checkbox" checked class="form-checkbox h-5 w-5 text-yellow-600 bg-gray-700 border-gray-600 rounded focus:ring-yellow-500" />
+                    <span class="text-gray-300">Use all API keys (rotates through them)</span>
+                </label>
+                <button id="sendMsgBtn" class="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-700 transition duration-200">Send Messages</button>
+                <p id="sendMsgStatus" class="mt-2 text-green-500"></p>
+            </section>
+
+            <section id="addUserSection" class="space-y-2 bg-gray-800 p-4 rounded shadow-lg hidden">
+                <h2 class="text-xl font-semibold mb-2">Add New User (Admin Only)</h2>
+                <input id="newUsername" type="text" placeholder="New Username" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <input id="newPassword" type="password" placeholder="New Password" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <div class="flex items-center gap-2">
+                    <input id="newCanAddPersistent" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500" />
+                    <label for="newCanAddPersistent" class="text-gray-300">Can add persistent keys (Admin privileges)</label>
+                </div>
+                <button id="addUserBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Add User</button>
+                <p id="addUserStatus" class="mt-2 text-green-500"></p>
+            </section>
+
+            <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                <h2 class="text-xl font-semibold mb-2">Xbox Profile Data</h2>
+                <input id="profileXuid" type="text" placeholder="Enter XUID to fetch profile" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
+                <button id="fetchProfileBtn" class="bg-teal-600 px-4 py-2 rounded hover:bg-teal-700 transition duration-200">Fetch Profile</button>
+                <pre id="profileDataOutput" class="mt-2 text-sm text-gray-200"></pre>
+                <p id="profileStatus" class="mt-2 text-red-500"></p>
+            </section>
+
+            <!-- NEW: Known XUIDs Section -->
+            <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                <h2 class="text-xl font-semibold mb-2">Known XUIDs</h2>
+                <div id="addKnownXuidForm" class="space-y-2 mb-4 hidden">
+                    <h3 class="text-lg font-medium mb-2">Add New Known XUID (Admin Only)</h3>
+                    <input id="newKnownXuid" type="text" placeholder="Enter XUID (16-digit number)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <input id="newKnownUsername" type="text" placeholder="Enter Username" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                    <button id="addKnownXuidBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Add Known XUID</button>
+                    <p id="knownXuidAddStatus" class="mt-2 text-green-500"></p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table id="knownXuidsTable" class="min-w-full text-sm">
+                        <thead>
+                            <tr>
+                                <th>Username</th>
+                                <th>XUID</th>
+                                <th class="admin-only-th hidden">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Known XUIDs will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+                <p id="knownXuidsStatus" class="mt-2 text-yellow-500"></p>
+            </section>
+
+            <div id="adminSection" class="hidden space-y-6">
+                <h2 class="text-2xl font-bold mt-8 mb-4">Admin Dashboard</h2>
+
+                <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                    <h3 class="text-xl font-semibold mb-2">Manage Users</h3>
+                    <p id="userListStatus" class="mt-2 text-yellow-500"></p>
+                    <div class="overflow-x-auto">
+                        <table id="userListTable" class="min-w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Can Add Persistent Keys</th>
+                                    <th>Is Admin</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Users will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
+                    <h3 class="text-xl font-semibold mb-2">Audit Logs</h3>
+                    <div class="flex gap-2 mb-4">
+                        <input id="auditLogUserFilter" type="text" placeholder="Filter by Username" class="flex-grow p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <input id="auditLogActionFilter" type="text" placeholder="Filter by Action" class="flex-grow p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                        <button id="applyAuditFilterBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Apply Filter</button>
+                        <button id="clearAuditFilterBtn" class="bg-gray-600 px-4 py-2 rounded hover:bg-gray-700 transition duration-200">Clear Filter</button>
+                    </div>
+                    <p id="auditLogsStatus" class="mt-2 text-yellow-500"></p>
+                    <div class="overflow-x-auto">
+                        <table id="auditLogsTable" class="min-w-full text-sm">
+                            <thead>
+                                <tr>
+                                    <th class="w-1/6">Timestamp</th>
+                                    <th class="w-1/6">User</th>
+                                    <th class="w-1/6">Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Audit logs will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </div>
     </div>
 
-    <div id="mainPanel" class="hidden space-y-6">
-      <div class="flex justify-between items-center mb-4">
-        <h1 class="text-3xl font-bold">Xbox Spammer Panel</h1>
-        <button id="logoutBtn" class="text-red-400 underline hover:text-red-500 transition duration-200">Logout</button>
-      </div>
-      
-      <p class="mb-4 text-lg">Logged in as: <span id="loggedInUser" class="font-semibold text-blue-300"></span></p>
+    <a id="openMHDDOSPanel" href="/mhddos_control_panel.html" title="Go to MHDDOS Panel (Conceptual)">&#x27A4;</a>
 
-      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
-        <h2 class="text-xl font-semibold mb-2">API Keys Management</h2>
-        <input id="apiKeyInput" type="text" placeholder="Enter API key (e.g., UUID format)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500" />
-        <div class="flex flex-wrap gap-2 mt-2">
-          <button id="addTempKeyBtn" class="bg-green-600 px-4 py-2 rounded hover:bg-green-700 transition duration-200">Add Temporary Key</button>
-          <button id="addPersistentKeyBtn" class="bg-purple-600 px-4 py-2 rounded hover:bg-purple-700 transition duration-200 hidden">Add Persistent Key (Admin only)</button>
-        </div>
-        <ul id="apiKeyList" class="mt-4 space-y-1"></ul>
-      </section>
+    <script>
+        const API_BASE = window.location.origin;
 
-      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
-        <h2 class="text-xl font-semibold mb-2">Gamertag to XUID Lookup</h2>
-        <input id="lookupUsername" type="text" placeholder="Enter Gamertag" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <button id="lookupBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Lookup XUID</button>
-        <p class="mt-2">XUID: <span id="lookupResult" class="font-semibold"></span></p>
-      </section>
+        // Elements
+        const loginPanel = document.getElementById('loginPanel');
+        const mainPanel = document.getElementById('mainPanel');
+        const loginBtn = document.getElementById('loginBtn');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginError = document.getElementById('loginError');
+        const loggedInUserSpan = document.getElementById('loggedInUser');
 
-      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
-        <h2 class="text-xl font-semibold mb-2">Send Message</h2>
-        <input id="messageXuid" type="text" placeholder="Target XUID (16-digit number)" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-        <input id="messageText" type="text" placeholder="Message text" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-        <input id="messageCount" type="number" placeholder="How many times" min="1" value="1" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-        <input id="messageDelay" type="number" placeholder="Delay (milliseconds) between messages" min="0" value="1000" class="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-yellow-500" />
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input id="useAllKeys" type="checkbox" checked class="form-checkbox h-5 w-5 text-yellow-600 bg-gray-700 border-gray-600 rounded focus:ring-yellow-500" />
-          <span class="text-gray-300">Use all API keys (rotates through them)</span>
-        </label>
-        <button id="sendMsgBtn" class="bg-yellow-600 px-4 py-2 rounded hover:bg-yellow-700 transition duration-200">Send Messages</button>
-        <p id="sendMsgStatus" class="mt-2 text-green-500"></p>
-      </section>
+        const apiKeyInput = document.getElementById('apiKeyInput');
+        const addTempKeyBtn = document.getElementById('addTempKeyBtn');
+        const addPersistentKeyBtn = document.getElementById('addPersistentKeyBtn');
+        const apiKeyList = document.getElementById('apiKeyList');
 
-      <section id="addUserSection" class="space-y-2 bg-gray-800 p-4 rounded shadow-lg hidden">
-        <h2 class="text-xl font-semibold mb-2">Add New User (Admin Only)</h2>
-        <input id="newUsername" type="text" placeholder="New Username" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <input id="newPassword" type="password" placeholder="New Password" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <div class="flex items-center gap-2">
-            <input id="newCanAddPersistent" type="checkbox" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500" />
-            <label for="newCanAddPersistent" class="text-gray-300">Can add persistent keys (Admin privileges)</label>
-        </div>
-        <button id="addUserBtn" class="bg-blue-600 px-4 py-2 rounded hover:bg-blue-700 transition duration-200">Add User</button>
-        <p id="addUserStatus" class="mt-2 text-green-500"></p>
-      </section>
+        const lookupUsernameInput = document.getElementById('lookupUsername');
+        const lookupBtn = document.getElementById('lookupBtn');
+        const lookupResult = document.getElementById('lookupResult');
 
-      <section class="space-y-2 bg-gray-800 p-4 rounded shadow-lg">
-        <h2 class="text-xl font-semibold mb-2">Xbox Profile Data</h2>
-        <input id="profileXuid" type="text" placeholder="Enter XUID to fetch profile" class="w-full p-2 rounded bg-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500" />
-        <button id="fetchProfileBtn" class="bg-teal-600 px-4 py-2 rounded hover:bg-teal-700 transition duration-200">Fetch Profile</button>
-        <pre id="profileDataOutput" class="mt-2 text-sm text-gray-200"></pre>
-        <p id="profileStatus" class="mt-2 text-red-500"></p>
-      </section>
+        const messageXuidInput = document.getElementById('messageXuid');
+        const messageTextInput = document.getElementById('messageText');
+        const messageCountInput = document.getElementById('messageCount');
+        const messageDelayInput = document.getElementById('messageDelay');
+        const useAllKeysCheckbox = document.getElementById('useAllKeys');
+        const sendMsgBtn = document.getElementById('sendMsgBtn');
+        const sendMsgStatus = document.getElementById('sendMsgStatus');
 
+        // NEW USER ELEMENTS
+        const addUserSection = document.getElementById('addUserSection');
+        const newUsernameInput = document.getElementById('newUsername');
+        const newPasswordInput = document.getElementById('newPassword');
+        const newCanAddPersistentCheckbox = document.getElementById('newCanAddPersistent');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const addUserStatus = document.getElementById('addUserStatus');
 
-      </div>
-  </div>
+        // NEW PROFILE DATA ELEMENTS
+        const profileXuidInput = document.getElementById('profileXuid');
+        const fetchProfileBtn = document.getElementById('fetchProfileBtn');
+        const profileDataOutput = document.getElementById('profileDataOutput');
+        const profileStatus = document.getElementById('profileStatus');
 
-  <script>
-    const API_BASE = 'http://localhost:3000';
+        // NEW ADMIN ELEMENTS
+        const adminSection = document.getElementById('adminSection');
+        const userListTableBody = document.querySelector('#userListTable tbody');
+        const userListStatus = document.getElementById('userListStatus');
+        const auditLogsTableBody = document.querySelector('#auditLogsTable tbody');
+        const auditLogsStatus = document.getElementById('auditLogsStatus');
+        const auditLogUserFilterInput = document.getElementById('auditLogUserFilter');
+        const auditLogActionFilterInput = document.getElementById('auditLogActionFilter');
+        const applyAuditFilterBtn = document.getElementById('applyAuditFilterBtn');
+        const clearAuditFilterBtn = document.getElementById('clearAuditFilterBtn');
 
-    // Elements
-    const loginPanel = document.getElementById('loginPanel');
-    const mainPanel = document.getElementById('mainPanel');
-    const loginBtn = document.getElementById('loginBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const usernameInput = document.getElementById('username');
-    const passwordInput = document.getElementById('password');
-    const loginError = document.getElementById('loginError');
-    const loggedInUserSpan = document.getElementById('loggedInUser');
-
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const addTempKeyBtn = document.getElementById('addTempKeyBtn');
-    const addPersistentKeyBtn = document.getElementById('addPersistentKeyBtn');
-    const apiKeyList = document.getElementById('apiKeyList');
-
-    const lookupUsernameInput = document.getElementById('lookupUsername');
-    const lookupBtn = document.getElementById('lookupBtn');
-    const lookupResult = document.getElementById('lookupResult');
-
-    const messageXuidInput = document.getElementById('messageXuid');
-    const messageTextInput = document.getElementById('messageText');
-    const messageCountInput = document.getElementById('messageCount');
-    const messageDelayInput = document.getElementById('messageDelay');
-    const useAllKeysCheckbox = document.getElementById('useAllKeys');
-    const sendMsgBtn = document.getElementById('sendMsgBtn');
-    const sendMsgStatus = document.getElementById('sendMsgStatus');
-
-    // NEW USER ELEMENTS
-    const addUserSection = document.getElementById('addUserSection');
-    const newUsernameInput = document.getElementById('newUsername');
-    const newPasswordInput = document.getElementById('newPassword');
-    const newCanAddPersistentCheckbox = document.getElementById('newCanAddPersistent');
-    const addUserBtn = document.getElementById('addUserBtn');
-    const addUserStatus = document.getElementById('addUserStatus');
-
-    // NEW PROFILE DATA ELEMENTS
-    const profileXuidInput = document.getElementById('profileXuid');
-    const fetchProfileBtn = document.getElementById('fetchProfileBtn');
-    const profileDataOutput = document.getElementById('profileDataOutput');
-    const profileStatus = document.getElementById('profileStatus');
+        // NEW KNOWN XUIDS ELEMENTS
+        const addKnownXuidForm = document.getElementById('addKnownXuidForm');
+        const newKnownXuidInput = document.getElementById('newKnownXuid');
+        const newKnownUsernameInput = document.getElementById('newKnownUsername');
+        const addKnownXuidBtn = document.getElementById('addKnownXuidBtn');
+        const knownXuidAddStatus = document.getElementById('knownXuidAddStatus');
+        const knownXuidsTableBody = document.querySelector('#knownXuidsTable tbody');
+        const knownXuidsStatus = document.getElementById('knownXuidsStatus');
 
 
-    let currentUser = null;
-    let apiKeys = []; // Stores temporary keys
-    let persistentKeys = []; // Stores persistent keys
-    window.canAddPersistent = false; // Global flag to indicate admin status for frontend logic
+        let currentUser = null;
+        let apiKeys = []; // Stores temporary keys
+        let persistentKeys = []; // Stores persistent keys
+        window.canAddPersistent = false; // Global flag to indicate if user can add persistent keys
+        window.isAdmin = false; // Global flag to indicate admin status for frontend logic
 
-    // --- Session Management ---
-    async function checkSession() {
-      try {
-        const res = await fetch(`${API_BASE}/check-session`, { credentials: 'include' });
-        const data = await res.json();
-        if (data.loggedIn) {
-          currentUser = data.username;
-          window.canAddPersistent = data.canAddPersistent; // Set global flag
-          loggedInUserSpan.textContent = currentUser;
-          showMainPanel(data);
-          return true;
-        }
-        return false;
-      } catch (error) {
-        console.error('Check session error:', error);
-        // Fallback to showing login panel on error
-        return false;
-      }
-    }
-
-    function showMainPanel(data) {
-      loginPanel.classList.add('hidden');
-      mainPanel.classList.remove('hidden');
-      loggedInUserSpan.textContent = data.username;
-
-      // Show/hide persistent key button based on user permissions
-      if (data.canAddPersistent) {
-        addPersistentKeyBtn.classList.remove('hidden');
-        addUserSection.classList.remove('hidden'); // Show add user section for admin
-      } else {
-        addPersistentKeyBtn.classList.add('hidden');
-        addUserSection.classList.add('hidden'); // Hide add user section for non-admin
-      }
-      loadApiKeys(); // Load keys once main panel is shown
-    }
-
-    async function login() {
-      loginError.classList.add('hidden');
-      const username = usernameInput.value.trim();
-      const password = passwordInput.value.trim();
-      if (!username || !password) {
-        loginError.textContent = 'Please enter username and password.';
-        loginError.classList.remove('hidden');
-        return;
-      }
-      try {
-        const res = await fetch(`${API_BASE}/login`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        const data = await res.json();
-        if (data.success) {
-          currentUser = username;
-          window.canAddPersistent = data.canAddPersistent; // Set global flag on successful login
-          showMainPanel(data);
-        } else {
-          loginError.textContent = data.message || 'Invalid credentials.';
-          loginError.classList.remove('hidden');
-        }
-      } catch (error) {
-        console.error('Login request error:', error);
-        loginError.textContent = 'Error connecting to server. Please try again.';
-        loginError.classList.remove('hidden');
-      }
-    }
-
-    async function logout() {
-      try {
-        await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
-        currentUser = null;
-        window.canAddPersistent = false; // Reset global flag on logout
-        loginPanel.classList.remove('hidden');
-        mainPanel.classList.add('hidden');
-        usernameInput.value = '';
-        passwordInput.value = '';
-        loginError.classList.add('hidden');
-        apiKeyList.innerHTML = ''; // Clear API key list on logout
-        apiKeys = [];
-        persistentKeys = [];
-        lookupResult.textContent = ''; // Clear lookup result
-        sendMsgStatus.textContent = ''; // Clear message status
-        addUserStatus.textContent = ''; // Clear add user status
-        profileDataOutput.textContent = ''; // Clear profile data
-        profileStatus.textContent = ''; // Clear profile status
-      } catch (error) {
-        console.error('Logout error:', error);
-        alert('Error during logout. Please clear cookies manually if issues persist.');
-      }
-    }
-
-    // --- API Key Management ---
-    async function loadApiKeys() {
-      apiKeyList.innerHTML = '';
-      try {
-        const res = await fetch(`${API_BASE}/api-keys`, { credentials: 'include' });
-        if (!res.ok) {
-          apiKeyList.innerHTML = '<li class="text-red-500 p-2">Failed to load API keys.</li>';
-          return;
-        }
-        const data = await res.json();
-        apiKeys = data.tempKeys || [];
-        persistentKeys = data.persistentKeys || [];
-
-        // Display persistent keys for ALL authenticated users
-        persistentKeys.forEach(key => addApiKeyToList(key, true));
-        
-        // Display temporary keys for all users
-        apiKeys.forEach(key => addApiKeyToList(key, false));
-
-        if (apiKeys.length === 0 && persistentKeys.length === 0) {
-          apiKeyList.innerHTML = '<li class="text-gray-400 p-2">No API keys added yet.</li>';
-        }
-
-      } catch (error) {
-        console.error('Error loading API keys:', error);
-        apiKeyList.innerHTML = '<li class="text-red-500 p-2">Error loading API keys.</li>';
-      }
-    }
-
-    function addApiKeyToList(key, persistent) {
-      const li = document.createElement('li');
-      li.className = `flex justify-between items-center p-2 rounded ${persistent ? 'bg-purple-900' : 'bg-gray-700'}`;
-
-      const keyText = document.createElement('span');
-      keyText.textContent = key;
-      keyText.title = key; // Show full key on hover
-      keyText.className = 'truncate max-w-[calc(100%-70px)]'; // Truncate long keys
-
-      const typeTag = document.createElement('span');
-      typeTag.textContent = persistent ? ' (Persistent)' : ' (Temp)';
-      typeTag.className = 'text-xs text-gray-400 ml-1';
-
-      const removeBtn = document.createElement('button');
-      removeBtn.textContent = 'Remove';
-      removeBtn.className = 'bg-red-600 px-2 py-1 rounded hover:bg-red-700 text-sm ml-2 transition duration-200';
-      removeBtn.onclick = async () => {
-        // Only allow admin to remove persistent keys, but any user can remove their temporary ones.
-        if (persistent && !window.canAddPersistent) { 
-          alert('Error: Only admin can remove persistent keys.');
-          return;
-        }
-        if (!confirm(`Are you sure you want to remove this key:\n${key}?`)) {
-            return;
-        }
-        try {
-          const res = await fetch(`${API_BASE}/api-keys/${encodeURIComponent(key)}?persistent=${persistent}`, {
-            method: 'DELETE',
-            credentials: 'include',
-          });
-          if (res.ok) {
-            await loadApiKeys(); // Reload all keys to update lists
-          } else {
-            const data = await res.json();
-            alert(data.message || 'Failed to remove key.');
-          }
-        } catch (error) {
-          console.error('Error removing key:', error);
-          alert('Error removing key. Check console for details.');
-        }
-      };
-
-      li.appendChild(keyText);
-      li.appendChild(typeTag); // Append the type tag
-      // Append the remove button if the user is an admin (can remove any key) 
-      // OR if it's a temporary key (which non-admins can remove).
-      if (window.canAddPersistent || !persistent) {
-          li.appendChild(removeBtn);
-      }
-      apiKeyList.appendChild(li);
-    }
-
-    async function addApiKey(persistent) {
-      const key = apiKeyInput.value.trim();
-      if (!key) {
-        alert('Please enter an API key first.');
-        return;
-      }
-      // Simple validation for API key format (UUID-like)
-      if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(key)) {
-        alert('Invalid API key format. Expected UUID-like (e.g., xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).');
-        return;
-      }
-
-      if (persistent && !window.canAddPersistent) { // Use window.canAddPersistent
-        alert('Error: Only admin can add persistent keys.');
-        return;
-      }
-      try {
-        const res = await fetch(`${API_BASE}/api-keys`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key, persistent }),
-        });
-        if (!res.ok) {
-          const data = await res.json();
-          alert(data.message || 'Failed to add key.');
-          return;
-        }
-        apiKeyInput.value = ''; // Clear input on success
-        await loadApiKeys(); // Reload keys to update display
-      } catch (error) {
-        console.error('Error adding key:', error);
-        alert('Error adding key. Check console for details.');
-      }
-    }
-
-    // --- Gamertag to XUID Lookup ---
-    async function lookupXUID() {
-      const gamertag = lookupUsernameInput.value.trim();
-      lookupResult.className = 'font-semibold'; // Reset class
-      lookupResult.textContent = 'Looking up...';
-
-      if (!gamertag) {
-        lookupResult.textContent = 'Please enter a gamertag.';
-        lookupResult.className = 'font-semibold text-red-500';
-        return;
-      }
-      // Prefer persistent keys for lookup if available, otherwise temporary
-      const apiKey = [...persistentKeys, ...apiKeys][0]; 
-      if (!apiKey) {
-        lookupResult.textContent = 'No API keys available to perform lookup. Add one first.';
-        lookupResult.className = 'font-semibold text-red-500';
-        return;
-      }
-
-      try {
-        console.log(`Frontend: Looking up XUID for gamertag: ${gamertag}`);
-        const res = await fetch(`${API_BASE}/lookup-xuid`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username: gamertag, apiKey }) // Backend expects 'username' for gamertag
-        });
-        const data = await res.json();
-        if (res.ok) {
-          lookupResult.textContent = data.xuid || 'XUID not found.';
-          lookupResult.className = 'font-semibold text-green-500';
-          console.log(`Frontend: XUID found: ${data.xuid}`);
-        } else {
-          lookupResult.textContent = data.details || data.message || 'Error or user not found.';
-          lookupResult.className = 'font-semibold text-red-500';
-        }
-      } catch (error) {
-        console.error('Frontend: Error during XUID lookup:', error);
-        lookupResult.textContent = 'Error during lookup. Check console.';
-        lookupResult.className = 'font-semibold text-red-500';
-      }
-    }
-
-    // --- Send Message ---
-    async function sendMessage() {
-      const xuid = messageXuidInput.value.trim();
-      const message = messageTextInput.value.trim();
-      const count = parseInt(messageCountInput.value, 10);
-      const delay = parseInt(messageDelayInput.value, 10);
-      const useAll = useAllKeysCheckbox.checked;
-
-      sendMsgStatus.textContent = '';
-      sendMsgStatus.className = 'mt-2 text-red-500';
-
-      if (!xuid || !message) {
-        sendMsgStatus.textContent = 'Please fill in Target XUID and Message text.';
-        return;
-      }
-      // Client-side XUID validation (16 digits)
-      if (!/^\d{16}$/.test(xuid)) {
-        sendMsgStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
-        return;
-      }
-      if (isNaN(count) || count < 1) {
-        sendMsgStatus.textContent = 'Message count must be a positive number (at least 1).';
-        return;
-      }
-      if (isNaN(delay) || delay < 0) {
-        sendMsgStatus.textContent = 'Delay must be 0 or more (milliseconds).';
-        return;
-      }
-
-      // Combine and filter API keys
-      const allAvailableKeys = [...persistentKeys, ...apiKeys];
-      const selectedApiKeys = useAll ? allAvailableKeys : allAvailableKeys.slice(0, 1);
-      
-      if (selectedApiKeys.length === 0) {
-        sendMsgStatus.textContent = 'No API keys available to send messages. Add one first.';
-        return;
-      }
-
-      console.log(`Frontend: Sending message to XUID: ${xuid}, message: "${message.substring(0, 30)}..." using ${selectedApiKeys.length} API key(s).`);
-      sendMsgStatus.textContent = 'Sending messages... Please wait.';
-      sendMsgStatus.className = 'mt-2 text-yellow-500'; // Indicate pending status
-
-      try {
-        const res = await fetch(`${API_BASE}/send-message`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ xuid, message, sendCount: count, timeSpacing: delay / 1000, apiKeys: selectedApiKeys })
-        });
-        const data = await res.json();
-        if (res.ok) {
-          if (data.failures && data.failures.length > 0) {
-              sendMsgStatus.textContent = `Messages sent, but ${data.failures.length} attempts failed. See console for details.`;
-              sendMsgStatus.className = 'mt-2 text-orange-500';
-              console.warn('Partial success - failures:', data.failures);
-          } else {
-              sendMsgStatus.textContent = `Successfully sent ${data.message || 'messages.'}`;
-              sendMsgStatus.className = 'mt-2 text-green-500';
-          }
-        } else {
-          sendMsgStatus.textContent = data.details || data.message || 'Failed to send messages.';
-        }
-      } catch (error) {
-        console.error('Frontend: Error sending messages:', error);
-        sendMsgStatus.textContent = 'Error connecting to server to send messages. Check console.';
-      }
-    }
-
-    // --- NEW: Add User Functionality ---
-    async function addUser() {
-        addUserStatus.textContent = ''; // Clear previous status
-        addUserStatus.className = 'mt-2 text-red-500'; // Default to red for errors
-
-        const username = newUsernameInput.value.trim();
-        const password = newPasswordInput.value.trim();
-        const canAddPersistent = newCanAddPersistentCheckbox.checked;
-
-        if (!username || !password) {
-            addUserStatus.textContent = 'Please enter a username and password for the new user.';
-            return;
-        }
-
-        try {
-            const res = await fetch(`${API_BASE}/add-user`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password, canAddPersistent })
-            });
-            const data = await res.json();
-
-            if (res.ok) {
-                addUserStatus.textContent = data.message || `User '${username}' added successfully.`;
-                addUserStatus.className = 'mt-2 text-green-500';
-                newUsernameInput.value = ''; // Clear inputs
-                newPasswordInput.value = '';
-                newCanAddPersistentCheckbox.checked = false;
-            } else {
-                addUserStatus.textContent = data.message || 'Failed to add user.';
-            }
-        } catch (error) {
-            console.error('Frontend: Error adding user:', error);
-            addUserStatus.textContent = 'Error connecting to server to add user.';
-        }
-    }
-
-    // --- NEW: Fetch Xbox Profile Data ---
-    async function fetchProfileData() {
-        profileDataOutput.textContent = ''; // Clear previous output
-        profileStatus.textContent = ''; // Clear previous status
-        profileStatus.className = 'mt-2 text-red-500'; // Default to red for errors
-
-        const xuid = profileXuidInput.value.trim();
-
-        if (!xuid) {
-            profileStatus.textContent = 'Please enter an XUID.';
-            return;
-        }
-        if (!/^\d{16}$/.test(xuid)) {
-            profileStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
-            return;
-        }
-
-        const apiKey = [...persistentKeys, ...apiKeys][0]; // Use first available API key
-        if (!apiKey) {
-            profileStatus.textContent = 'No API keys available to fetch profile data. Add one first.';
-            return;
-        }
-
-        profileStatus.textContent = 'Fetching profile data...';
-        profileStatus.className = 'mt-2 text-yellow-500'; // Indicate pending
-
-        try {
-            const res = await fetch(`${API_BASE}/profile-data`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ xuid, apiKey })
-            });
-            const data = await res.json();
-
-            if (res.ok && data.profile) {
-                // Display selected fields or the whole object if you prefer
-                let displayText = `Gamertag: ${data.profile.gamertag}\n`;
-                displayText += `XUID: ${data.profile.id}\n`;
-                displayText += `Gamerscore: ${data.profile.gamerscore}\n`;
-                displayText += `Account Tier: ${data.profile.accountTier}\n`;
-                displayText += `Xbox One Rep: ${data.profile.xboxOneRep}\n`;
-                displayText += `Presence State: ${data.profile.presenceState || 'Offline'}\n`;
-                if (data.profile.presenceText) {
-                    displayText += `Presence Text: ${data.profile.presenceText}\n`;
+        // --- Session Management ---
+        async function checkSession() {
+            try {
+                const res = await fetch(`${API_BASE}/check-session`, { credentials: 'include' });
+                const data = await res.json();
+                if (data.loggedIn) {
+                    currentUser = data.username;
+                    window.canAddPersistent = data.canAddPersistent;
+                    window.isAdmin = data.isAdmin; // Set global admin flag
+                    loggedInUserSpan.textContent = currentUser;
+                    showMainPanel(data);
+                    return true;
                 }
-                displayText += `Display Pic: ${data.profile.displayPicRaw || 'N/A'}\n`;
-                if (data.profile.bio) {
-                    displayText += `Bio: ${data.profile.bio}\n`;
-                }
-                // You can add more fields from data.profile as needed
-
-                profileDataOutput.textContent = displayText;
-                profileStatus.textContent = 'Profile data fetched successfully!';
-                profileStatus.className = 'mt-2 text-green-500';
-            } else {
-                profileDataOutput.textContent = ''; // Clear any previous data
-                profileStatus.textContent = data.details || data.message || 'Failed to fetch profile data.';
+                return false;
+            } catch (error) {
+                console.error('Check session error:', error);
+                return false;
             }
-        } catch (error) {
-            console.error('Frontend: Error fetching profile data:', error);
-            profileDataOutput.textContent = ''; // Clear any previous data
-            profileStatus.textContent = 'Error connecting to server to fetch profile data.';
         }
-    }
+
+        function showMainPanel(data) {
+            loginPanel.classList.add('hidden');
+            mainPanel.classList.remove('hidden');
+            loggedInUserSpan.textContent = data.username;
+
+            if (data.canAddPersistent) {
+                addPersistentKeyBtn.classList.remove('hidden');
+                addUserSection.classList.remove('hidden');
+            } else {
+                addPersistentKeyBtn.classList.add('hidden');
+                addUserSection.classList.add('hidden');
+            }
+
+            // Admin specific UI elements
+            const adminOnlyHeaders = document.querySelectorAll('.admin-only-th');
+
+            if (data.isAdmin) {
+                adminSection.classList.remove('hidden');
+                addKnownXuidForm.classList.remove('hidden'); // Show add form for admin
+                adminOnlyHeaders.forEach(th => th.classList.remove('hidden')); // Show admin columns
+                loadUsers(); // Load users for admin
+                loadAuditLogs(); // Load audit logs for admin
+            } else {
+                adminSection.classList.add('hidden');
+                addKnownXuidForm.classList.add('hidden'); // Hide add form for non-admin
+                adminOnlyHeaders.forEach(th => th.classList.add('hidden')); // Hide admin columns
+            }
+
+            loadApiKeys();
+            loadKnownXuids(); // Load known XUIDs for all authenticated users
+        }
+
+        async function login() {
+            loginError.classList.add('hidden');
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+            if (!username || !password) {
+                loginError.textContent = 'Please enter username and password.';
+                loginError.classList.remove('hidden');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/login`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    currentUser = username;
+                    window.canAddPersistent = data.canAddPersistent;
+                    window.isAdmin = data.isAdmin; // Set global admin flag on successful login
+                    showMainPanel(data);
+                } else {
+                    loginError.textContent = data.message || 'Invalid credentials.';
+                    loginError.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Login request error:', error);
+                loginError.textContent = 'Error connecting to server. Please try again.';
+                loginError.classList.remove('hidden');
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch(`${API_BASE}/logout`, { method: 'POST', credentials: 'include' });
+                currentUser = null;
+                window.canAddPersistent = false;
+                window.isAdmin = false; // Reset global admin flag on logout
+                loginPanel.classList.remove('hidden');
+                mainPanel.classList.add('hidden');
+                usernameInput.value = '';
+                passwordInput.value = '';
+                loginError.classList.add('hidden');
+                apiKeyList.innerHTML = ''; // Clear API key list on logout
+                apiKeys = [];
+                persistentKeys = [];
+                lookupResult.textContent = ''; // Clear lookup result
+                sendMsgStatus.textContent = ''; // Clear message status
+                addUserStatus.textContent = ''; // Clear add user status
+                profileDataOutput.textContent = ''; // Clear profile data
+                profileStatus.textContent = ''; // Clear profile status
+                userListTableBody.innerHTML = ''; // Clear user list
+                auditLogsTableBody.innerHTML = ''; // Clear audit logs
+                knownXuidsTableBody.innerHTML = ''; // Clear known XUIDs list
+                knownXuidAddStatus.textContent = ''; // Clear known XUID add status
+                knownXuidsStatus.textContent = ''; // Clear known XUIDs general status
+            } catch (error) {
+                console.error('Logout error:', error);
+                alert('Error during logout. Please clear cookies manually if issues persist.');
+            }
+        }
+
+        // --- API Key Management ---
+        async function loadApiKeys() {
+            apiKeyList.innerHTML = '';
+            try {
+                const res = await fetch(`${API_BASE}/api-keys`, { credentials: 'include' });
+                if (!res.ok) {
+                    apiKeyList.innerHTML = '<li class="text-red-500 p-2">Failed to load API keys.</li>';
+                    return;
+                }
+                const data = await res.json();
+                apiKeys = data.tempKeys || [];
+                persistentKeys = data.persistentKeys || [];
+
+                persistentKeys.forEach(key => addApiKeyToList(key, true));
+                apiKeys.forEach(key => addApiKeyToList(key, false));
+
+                if (apiKeys.length === 0 && persistentKeys.length === 0) {
+                    apiKeyList.innerHTML = '<li class="text-gray-400 p-2">No API keys added yet.</li>';
+                }
+
+            } catch (error) {
+                console.error('Error loading API keys:', error);
+                apiKeyList.innerHTML = '<li class="text-red-500 p-2">Error loading API keys.</li>';
+            }
+        }
+
+        function addApiKeyToList(key, persistent) {
+            const li = document.createElement('li');
+            li.className = `flex justify-between items-center p-2 rounded ${persistent ? 'bg-purple-900' : 'bg-gray-700'}`;
+
+            const keyText = document.createElement('span');
+            keyText.textContent = key;
+            keyText.title = key; // Show full key on hover
+            keyText.className = 'truncate max-w-[calc(100%-70px)]'; // Truncate long keys
+
+            const typeTag = document.createElement('span');
+            typeTag.textContent = persistent ? ' (Persistent)' : ' (Temp)';
+            typeTag.className = 'text-xs text-gray-400 ml-1';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.textContent = 'Remove';
+            removeBtn.className = 'bg-red-600 px-2 py-1 rounded hover:bg-red-700 text-sm ml-2 transition duration-200';
+            removeBtn.onclick = async () => {
+                if (persistent && !window.canAddPersistent) {
+                    alert('Error: Only admin can remove persistent keys.');
+                    return;
+                }
+                if (!confirm(`Are you sure you want to remove this key:\n${key}?`)) {
+                    return;
+                }
+                try {
+                    const res = await fetch(`${API_BASE}/api-keys/${encodeURIComponent(key)}?persistent=${persistent}`, {
+                        method: 'DELETE',
+                        credentials: 'include',
+                    });
+                    if (res.ok) {
+                        await loadApiKeys();
+                    } else {
+                        const data = await res.json();
+                        alert(data.message || 'Failed to remove key.');
+                    }
+                } catch (error) {
+                    console.error('Error removing key:', error);
+                    alert('Error removing key. Check console for details.');
+                }
+            };
+
+            li.appendChild(keyText);
+            li.appendChild(typeTag);
+            // Admin can remove any key, non-admin can only remove temporary keys
+            if (window.isAdmin || !persistent) {
+                li.appendChild(removeBtn);
+            }
+            apiKeyList.appendChild(li);
+        }
+
+        async function addApiKey(persistent) {
+            const key = apiKeyInput.value.trim();
+            if (!key) {
+                alert('Please enter an API key first.');
+                return;
+            }
+            if (!/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(key)) {
+                alert('Invalid API key format. Expected UUID-like (e.g., xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx).');
+                return;
+            }
+
+            if (persistent && !window.canAddPersistent) {
+                alert('Error: Only admin can add persistent keys.');
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/api-keys`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, persistent }),
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert(data.message || 'Failed to add key.');
+                    return;
+                }
+                apiKeyInput.value = '';
+                await loadApiKeys();
+            } catch (error) {
+                console.error('Error adding key:', error);
+                alert('Error adding key. Check console for details.');
+            }
+        }
+
+        // --- Gamertag to XUID Lookup ---
+        async function lookupXUID() {
+            const gamertag = lookupUsernameInput.value.trim();
+            lookupResult.className = 'font-semibold';
+            lookupResult.textContent = 'Looking up...';
+
+            if (!gamertag) {
+                lookupResult.textContent = 'Please enter a gamertag.';
+                lookupResult.className = 'font-semibold text-red-500';
+                return;
+            }
+            const apiKey = [...persistentKeys, ...apiKeys][0];
+            if (!apiKey) {
+                lookupResult.textContent = 'No API keys available to perform lookup. Add one first.';
+                lookupResult.className = 'font-semibold text-red-500';
+                return;
+            }
+
+            try {
+                console.log(`Frontend: Looking up XUID for gamertag: ${gamertag}`);
+                const res = await fetch(`${API_BASE}/lookup-xuid`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: gamertag, apiKey })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    lookupResult.textContent = data.xuid || 'XUID not found.';
+                    lookupResult.className = 'font-semibold text-green-500';
+                    console.log(`Frontend: XUID found: ${data.xuid}`);
+                } else {
+                    lookupResult.textContent = data.details || data.message || 'Error or user not found.';
+                    lookupResult.className = 'font-semibold text-red-500';
+                }
+            } catch (error) {
+                console.error('Frontend: Error during XUID lookup:', error);
+                lookupResult.textContent = 'Error during lookup. Check console.';
+                lookupResult.className = 'font-semibold text-red-500';
+            }
+        }
+
+        // --- Send Message ---
+        async function sendMessage() {
+            const xuid = messageXuidInput.value.trim();
+            const message = messageTextInput.value.trim();
+            const count = parseInt(messageCountInput.value, 10);
+            const delay = parseInt(messageDelayInput.value, 10);
+            const useAll = useAllKeysCheckbox.checked;
+
+            sendMsgStatus.textContent = '';
+            sendMsgStatus.className = 'mt-2 text-red-500';
+
+            if (!xuid || !message) {
+                sendMsgStatus.textContent = 'Please fill in Target XUID and Message text.';
+                return;
+            }
+            if (!/^\d{16}$/.test(xuid)) {
+                sendMsgStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
+                return;
+            }
+            if (isNaN(count) || count < 1) {
+                sendMsgStatus.textContent = 'Message count must be a positive number (at least 1).';
+                return;
+            }
+            if (isNaN(delay) || delay < 0) {
+                sendMsgStatus.textContent = 'Delay must be 0 or more (milliseconds).';
+                return;
+            }
+
+            const allAvailableKeys = [...persistentKeys, ...apiKeys];
+            const selectedApiKeys = useAll ? allAvailableKeys : allAvailableKeys.slice(0, 1);
+            
+            if (selectedApiKeys.length === 0) {
+                sendMsgStatus.textContent = 'No API keys available to send messages. Add one first.';
+                return;
+            }
+
+            console.log(`Frontend: Sending message to XUID: ${xuid}, message: "${message.substring(0, 30)}..." using ${selectedApiKeys.length} API key(s).`);
+            sendMsgStatus.textContent = 'Sending messages... Please wait.';
+            sendMsgStatus.className = 'mt-2 text-yellow-500';
+
+            try {
+                const res = await fetch(`${API_BASE}/send-message`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xuid, message, sendCount: count, timeSpacing: delay / 1000, apiKeys: selectedApiKeys })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    if (data.failures && data.failures.length > 0) {
+                        sendMsgStatus.textContent = `Messages sent, but ${data.failures.length} attempts failed. See console for details.`;
+                        sendMsgStatus.className = 'mt-2 text-orange-500';
+                        console.warn('Partial success - failures:', data.failures);
+                    } else {
+                        sendMsgStatus.textContent = `Successfully sent ${data.message || 'messages.'}`;
+                        sendMsgStatus.className = 'mt-2 text-green-500';
+                    }
+                } else {
+                    sendMsgStatus.textContent = data.details || data.message || 'Failed to send messages.';
+                }
+            } catch (error) {
+                console.error('Frontend: Error sending messages:', error);
+                sendMsgStatus.textContent = 'Error connecting to server to send messages. Check console.';
+            }
+        }
+
+        // --- NEW: Add User Functionality ---
+        async function addUser() {
+            addUserStatus.textContent = '';
+            addUserStatus.className = 'mt-2 text-red-500';
+
+            const username = newUsernameInput.value.trim();
+            const password = newPasswordInput.value.trim();
+            const canAddPersistent = newCanAddPersistentCheckbox.checked;
+
+            if (!username || !password) {
+                addUserStatus.textContent = 'Please enter a username and password for the new user.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/add-user`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password, canAddPersistent })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    addUserStatus.textContent = data.message || `User '${username}' added successfully.`;
+                    addUserStatus.className = 'mt-2 text-green-500';
+                    newUsernameInput.value = '';
+                    newPasswordInput.value = '';
+                    newCanAddPersistentCheckbox.checked = false;
+                    if (window.isAdmin) loadUsers(); // Refresh user list if admin
+                } else {
+                    addUserStatus.textContent = data.message || 'Failed to add user.';
+                }
+            } catch (error) {
+                console.error('Frontend: Error adding user:', error);
+                addUserStatus.textContent = 'Error connecting to server to add user.';
+            }
+        }
+
+        // --- NEW: Fetch Xbox Profile Data ---
+        async function fetchProfileData() {
+            profileDataOutput.textContent = '';
+            profileStatus.textContent = '';
+            profileStatus.className = 'mt-2 text-red-500';
+
+            const xuid = profileXuidInput.value.trim();
+
+            if (!xuid) {
+                profileStatus.textContent = 'Please enter an XUID.';
+                return;
+            }
+            if (!/^\d{16}$/.test(xuid)) {
+                profileStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
+                return;
+            }
+
+            const apiKey = [...persistentKeys, ...apiKeys][0];
+            if (!apiKey) {
+                profileStatus.textContent = 'No API keys available to fetch profile data. Add one first.';
+                return;
+            }
+
+            profileStatus.textContent = 'Fetching profile data...';
+            profileStatus.className = 'mt-2 text-yellow-500';
+
+            try {
+                const res = await fetch(`${API_BASE}/profile-data`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xuid, apiKey })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.profile) {
+                    let displayText = `Gamertag: ${data.profile.gamertag}\n`;
+                    displayText += `XUID: ${data.profile.id}\n`;
+                    displayText += `Gamerscore: ${data.profile.gamerscore}\n`;
+                    displayText += `Account Tier: ${data.profile.accountTier}\n`;
+                    displayText += `Xbox One Rep: ${data.profile.xboxOneRep}\n`;
+                    displayText += `Presence State: ${data.profile.presenceState || 'Offline'}\n`;
+                    if (data.profile.presenceText) {
+                        displayText += `Presence Text: ${data.profile.presenceText}\n`;
+                    }
+                    displayText += `Display Pic: ${data.profile.displayPicRaw || 'N/A'}\n`;
+                    if (data.profile.bio) {
+                        displayText += `Bio: ${data.profile.bio}\n`;
+                    }
+                    
+                    profileDataOutput.textContent = displayText;
+                    profileStatus.textContent = 'Profile data fetched successfully!';
+                    profileStatus.className = 'mt-2 text-green-500';
+                } else {
+                    profileDataOutput.textContent = '';
+                    profileStatus.textContent = data.details || data.message || 'Failed to fetch profile data.';
+                }
+            } catch (error) {
+                console.error('Frontend: Error fetching profile data:', error);
+                profileDataOutput.textContent = '';
+                profileStatus.textContent = 'Error connecting to server to fetch profile data.';
+            }
+        }
+
+        // --- NEW: Admin User Management Functions ---
+        async function loadUsers() {
+            userListTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Loading users...</td></tr>';
+            userListStatus.textContent = '';
+            try {
+                const res = await fetch(`${API_BASE}/admin/users`, { credentials: 'include' });
+                const data = await res.json();
+
+                userListTableBody.innerHTML = ''; // Clear existing rows
+                if (res.ok && data.users && data.users.length > 0) {
+                    data.users.forEach(user => {
+                        const row = userListTableBody.insertRow();
+                        row.innerHTML = `
+                            <td class="py-2 px-4">${user.username}</td>
+                            <td class="py-2 px-4">
+                                <input type="checkbox" data-username="${user.username}" data-field="canAddPersistent"
+                                    ${user.can_add_persistent ? 'checked' : ''}
+                                    ${!window.isAdmin || user.username === currentUser ? 'disabled' : ''}
+                                    class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500" />
+                            </td>
+                            <td class="py-2 px-4">
+                                <input type="checkbox" data-username="${user.username}" data-field="isAdmin"
+                                    ${user.is_admin ? 'checked' : ''}
+                                    ${!window.isAdmin || user.username === currentUser ? 'disabled' : ''}
+                                    class="form-checkbox h-5 w-5 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500" />
+                            </td>
+                            <td class="py-2 px-4">
+                                <button data-username="${user.username}" class="delete-user-btn bg-red-600 px-2 py-1 rounded hover:bg-red-700 text-sm transition duration-200"
+                                    ${user.username === currentUser || user.is_admin ? 'disabled' : ''}>Delete</button>
+                            </td>
+                        `;
+                    });
+                    document.querySelectorAll('.delete-user-btn').forEach(button => {
+                        button.onclick = (e) => deleteUser(e.target.dataset.username);
+                    });
+                    // Add event listeners for new checkboxes
+                    document.querySelectorAll('#userListTable input[type="checkbox"]').forEach(checkbox => {
+                        checkbox.onchange = (e) => {
+                            const username = e.target.dataset.username;
+                            const field = e.target.dataset.field;
+                            const value = e.target.checked;
+                            updateUserPermissions(username, field, value);
+                        };
+                    });
+
+                } else {
+                    userListTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No users found.</td></tr>';
+                    userListStatus.textContent = data.message || 'Failed to load users.';
+                    userListStatus.className = 'mt-2 text-red-500';
+                }
+            } catch (error) {
+                console.error('Frontend: Error loading users:', error);
+                userListTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Error loading users.</td></tr>';
+                userListStatus.textContent = 'Error connecting to server to load users.';
+                userListStatus.className = 'mt-2 text-red-500';
+            }
+        }
+
+        async function updateUserPermissions(username, field, value) {
+            userListStatus.textContent = `Updating ${field} for ${username}...`;
+            userListStatus.className = 'mt-2 text-yellow-500';
+
+            let payload = {};
+            // Fetch current permissions to send a complete payload
+            const userRow = Array.from(userListTableBody.rows).find(row => row.querySelector(`[data-username="${username}"]`)?.dataset.username === username);
+            if (userRow) {
+                payload.canAddPersistent = userRow.querySelector('[data-field="canAddPersistent"]').checked;
+                payload.isAdmin = userRow.querySelector('[data-field="isAdmin"]').checked;
+            }
+
+            // Override the specific field being changed
+            if (field === 'canAddPersistent') {
+                payload.canAddPersistent = value;
+            } else if (field === 'isAdmin') {
+                payload.isAdmin = value;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/users/${encodeURIComponent(username)}`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    userListStatus.textContent = data.message || `Permissions for ${username} updated successfully!`;
+                    userListStatus.className = 'mt-2 text-green-500';
+                    // Re-load users to ensure UI is consistent with backend state
+                    loadUsers();
+                } else {
+                    userListStatus.textContent = data.message || 'Failed to update user permissions.';
+                    userListStatus.className = 'mt-2 text-red-500';
+                    // Re-load users to revert UI if update failed
+                    loadUsers();
+                }
+            } catch (error) {
+                console.error('Error updating user permissions:', error);
+                userListStatus.textContent = 'Error connecting to server to update permissions.';
+                userListStatus.className = 'mt-2 text-red-500';
+                loadUsers(); // Revert UI on network error
+            }
+        }
+
+        async function deleteUser(username) {
+            if (!confirm(`Are you sure you want to delete user '${username}'?`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/admin/users/${encodeURIComponent(username)}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || `User '${username}' deleted successfully.`);
+                    loadUsers(); // Refresh the list
+                } else {
+                    alert(data.message || 'Failed to delete user.');
+                }
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                alert('Error deleting user. Check console for details.');
+            }
+        }
+
+        async function loadAuditLogs(usernameFilter = '', actionFilter = '') {
+            auditLogsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Loading audit logs...</td></tr>';
+            auditLogsStatus.textContent = '';
+            let queryParams = new URLSearchParams();
+            if (usernameFilter) queryParams.append('username', usernameFilter);
+            if (actionFilter) queryParams.append('action', actionFilter);
+
+            try {
+                const res = await fetch(`${API_BASE}/admin/audit-logs?${queryParams.toString()}`, { credentials: 'include' });
+                const data = await res.json();
+
+                auditLogsTableBody.innerHTML = ''; // Clear existing rows
+                if (res.ok && data.logs && data.logs.length > 0) {
+                    data.logs.forEach(log => {
+                        const row = auditLogsTableBody.insertRow();
+                        const timestamp = new Date(log.timestamp * 1000).toLocaleString();
+                        row.innerHTML = `
+                            <td class="py-2 px-4">${timestamp}</td>
+                            <td class="py-2 px-4">${log.username}</td>
+                            <td class="py-2 px-4">${log.action}</td>
+                            <td class="py-2 px-4 break-all">${JSON.stringify(log.details, null, 2)}</td>
+                        `;
+                    });
+                } else {
+                    auditLogsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">No audit logs found.</td></tr>';
+                    auditLogsStatus.textContent = data.message || 'Failed to load audit logs.';
+                    auditLogsStatus.className = 'mt-2 text-red-500';
+                }
+            } catch (error) {
+                console.error('Frontend: Error loading audit logs:', error);
+                auditLogsTableBody.innerHTML = '<tr><td colspan="4" class="text-center py-4">Error loading audit logs.</td></tr>';
+                auditLogsStatus.textContent = 'Error connecting to server to load audit logs.';
+                auditLogsStatus.className = 'mt-2 text-red-500';
+            }
+        }
+
+        // --- NEW: Known XUIDs Functions ---
+        async function loadKnownXuids() {
+            knownXuidsTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Loading known XUIDs...</td></tr>';
+            knownXuidsStatus.textContent = '';
+            try {
+                const res = await fetch(`${API_BASE}/known-xuids`, { credentials: 'include' });
+                const data = await res.json();
+
+                knownXuidsTableBody.innerHTML = ''; // Clear existing rows
+                if (res.ok && data.knownXuids && data.knownXuids.length > 0) {
+                    data.knownXuids.forEach(item => {
+                        const row = knownXuidsTableBody.insertRow();
+                        row.innerHTML = `
+                            <td class="py-2 px-4">${item.username}</td>
+                            <td class="py-2 px-4 break-all">${item.xuid}</td>
+                            <td class="py-2 px-4 admin-only-td ${window.isAdmin ? '' : 'hidden'}">
+                                <button data-xuid="${item.xuid}" class="delete-known-xuid-btn bg-red-600 px-2 py-1 rounded hover:bg-red-700 text-sm transition duration-200">Delete</button>
+                            </td>
+                        `;
+                    });
+
+                    // Add event listeners for delete buttons if admin
+                    if (window.isAdmin) {
+                        document.querySelectorAll('.delete-known-xuid-btn').forEach(button => {
+                            button.onclick = (e) => deleteKnownXuid(e.target.dataset.xuid);
+                        });
+                    }
+                } else {
+                    knownXuidsTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No known XUIDs added yet.</td></tr>';
+                    knownXuidsStatus.textContent = data.message || 'Failed to load known XUIDs.';
+                    knownXuidsStatus.className = 'mt-2 text-red-500';
+                }
+            } catch (error) {
+                console.error('Frontend: Error loading known XUIDs:', error);
+                knownXuidsTableBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Error loading known XUIDs.</td></tr>';
+                knownXuidsStatus.textContent = 'Error connecting to server to load known XUIDs.';
+                knownXuidsStatus.className = 'mt-2 text-red-500';
+            }
+        }
+
+        async function addKnownXuid() {
+            knownXuidAddStatus.textContent = '';
+            knownXuidAddStatus.className = 'mt-2 text-red-500';
+
+            const xuid = newKnownXuidInput.value.trim();
+            const username = newKnownUsernameInput.value.trim();
+
+            if (!xuid || !username) {
+                knownXuidAddStatus.textContent = 'Please enter both XUID and Username.';
+                return;
+            }
+            if (!/^\d{16}$/.test(xuid)) {
+                knownXuidAddStatus.textContent = 'Invalid XUID format: Must be a 16-digit number.';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/known-xuids`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ xuid, username })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    knownXuidAddStatus.textContent = data.message || `Known XUID ${xuid} added successfully.`;
+                    knownXuidAddStatus.className = 'mt-2 text-green-500';
+                    newKnownXuidInput.value = '';
+                    newKnownUsernameInput.value = '';
+                    loadKnownXuids(); // Refresh the list
+                } else {
+                    knownXuidAddStatus.textContent = data.message || 'Failed to add known XUID.';
+                }
+            } catch (error) {
+                console.error('Frontend: Error adding known XUID:', error);
+                knownXuidAddStatus.textContent = 'Error connecting to server to add known XUID.';
+            }
+        }
+
+        async function deleteKnownXuid(xuid) {
+            if (!confirm(`Are you sure you want to delete known XUID '${xuid}'?`)) {
+                return;
+            }
+            try {
+                const res = await fetch(`${API_BASE}/known-xuids/${encodeURIComponent(xuid)}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || `Known XUID ${xuid} deleted successfully.`);
+                    loadKnownXuids(); // Refresh the list
+                } else {
+                    alert(data.message || 'Failed to delete known XUID.');
+                }
+            } catch (error) {
+                console.error('Error deleting known XUID:', error);
+                alert('Error deleting known XUID. Check console for details.');
+            }
+        }
 
 
-    // --- Event Listeners ---
-    loginBtn.addEventListener('click', login);
-    logoutBtn.addEventListener('click', logout);
-    addTempKeyBtn.addEventListener('click', () => addApiKey(false));
-    addPersistentKeyBtn.addEventListener('click', () => addApiKey(true));
-    lookupBtn.addEventListener('click', lookupXUID);
-    sendMsgBtn.addEventListener('click', sendMessage);
-    addUserBtn.addEventListener('click', addUser); // New event listener for Add User button
-    fetchProfileBtn.addEventListener('click', fetchProfileData); // NEW event listener for Profile Data
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', checkSession);
 
-    // Initial check on page load
-    (async () => {
-      const loggedIn = await checkSession();
-      if (!loggedIn) {
-        loginPanel.classList.remove('hidden');
-        mainPanel.classList.add('hidden');
-      }
-    })();
-  </script>
+        loginBtn.addEventListener('click', login);
+        logoutBtn.addEventListener('click', logout);
+
+        addTempKeyBtn.addEventListener('click', () => addApiKey(false));
+        addPersistentKeyBtn.addEventListener('click', () => addApiKey(true));
+
+        lookupBtn.addEventListener('click', lookupXUID);
+        sendMsgBtn.addEventListener('click', sendMessage);
+
+        addUserBtn.addEventListener('click', addUser);
+        fetchProfileBtn.addEventListener('click', fetchProfileData);
+
+        applyAuditFilterBtn.addEventListener('click', () => {
+            const userFilter = auditLogUserFilterInput.value.trim();
+            const actionFilter = auditLogActionFilterInput.value.trim();
+            loadAuditLogs(userFilter, actionFilter);
+        });
+
+        clearAuditFilterBtn.addEventListener('click', () => {
+            auditLogUserFilterInput.value = '';
+            auditLogActionFilterInput.value = '';
+            loadAuditLogs(); // Load all logs
+        });
+
+        // Known XUIDs event listener
+        addKnownXuidBtn.addEventListener('click', addKnownXuid);
+
+    </script>
 </body>
 </html>

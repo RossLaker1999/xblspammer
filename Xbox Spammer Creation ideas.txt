@@ -1,0 +1,21 @@
+Xbox Spammer Creation ideas
+
+Include -
+
+1. Clean nice panel
+2. Ability to add/remove api keys
+3. Make each api key send a message to a specific user
+4. Allow for a username to be entered for XUID lookup and saved to that username for future commands (API uses xuid to id profiles over usernames)
+5. Allow for a custom message and time spacing between message sends.
+6. Allow for a option to use all api keys for the messages or just a specific api key
+7. Set up a persistent ssh server or website this script can be ran form that looks very nice and detailed.
+8. Add account reporting option
+9. Add a party invite option to start a party on my xbox using one of the api keys provide for ip pulling
+10. Add a rage bait option for banning (Trolls them into raging through messages or part invite spamming)
+11. Ability to create xbl.io account and get the API key (Might not be possible.)
+12. Keep adding to the API register with more and more accounts create a botnet like army of api key
+13. Discord bot integration 
+
+(Make this a multi day project keep enhancing and adding features eventually implement into GitHub. Could possibly sell as a service)
+
+Code:
